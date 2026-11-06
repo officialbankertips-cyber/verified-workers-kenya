@@ -24,13 +24,13 @@ const User = require("../src/models/User");
   const update = {
     $set: {
       role: "admin",
-      passwordHash,
       isActive: true,
       fullName
     },
     $setOnInsert: {
       email,
       phone,
+      passwordHash,
       paymentStatus: "paid",
       verificationStatus: "verified"
     }
