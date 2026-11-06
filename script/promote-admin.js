@@ -25,12 +25,14 @@ const User = require("../src/models/User");
     $set: {
       role: "admin",
       isActive: true,
-      fullName
+      fullName,
+      // ADMIN_PASSWORD is the source of truth for this setup command.
+      // Also repairs existing admin records whose passwordHash is missing.
+      passwordHash
     },
     $setOnInsert: {
       email,
       phone,
-      passwordHash,
       paymentStatus: "paid",
       verificationStatus: "verified"
     }
@@ -43,7 +45,8 @@ const User = require("../src/models/User");
   );
 
   console.log(`Admin account is ready for ${admin.email}.`);
-  console.log("Sign in using ADMIN_EMAIL and ADMIN_PASSWORD. The password is stored as a bcrypt hash.");
+  console.log("Admin password hash has been set from ADMIN_PASSWORD.");
+  console.log("Sign in using ADMIN_EMAIL and ADMIN_PASSWORD.");
   await mongoose.disconnect();
 })().catch(async (error) => {
   console.error("Admin setup failed:", error.message);
