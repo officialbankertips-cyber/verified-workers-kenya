@@ -19,9 +19,15 @@ router.post("/register", authLimiter, async (req, res, next) => {
       privacyConsentAt: req.body.privacyConsent ? new Date() : undefined,
       termsAcceptedAt: req.body.termsAccepted ? new Date() : undefined
     });
-    req.session.userId = user._id.toString();
-    req.session.role = user.role;
-    res.status(201).json({ message: "Account created. Complete the Ksh 199 registration payment to activate paid features.", user: safeUser(user) });
+    req.session.regenerate((sessionError) => {
+      if (sessionError) return next(sessionError);
+      req.session.userId = user._id.toString();
+      req.session.role = user.role;
+      req.session.save((saveError) => {
+        if (saveError) return next(saveError);
+        res.status(201).json({ message: "Account created. Complete the Ksh 199 registration payment to activate paid features.", user: safeUser(user) });
+      });
+    });
   } catch (e) { next(e); }
 });
 
@@ -29,15 +35,31 @@ router.post("/login", authLimiter, async (req, res, next) => {
   try {
     const email = String(req.body.email || "").toLowerCase().trim();
     const user = await User.findOne({ email });
-    if (!user || !await bcrypt.compare(String(req.body.password || ""), user.passwordHash)) return res.status(401).json({ error: "Invalid email or password." });
+    // Older or manually-created admin records may not have passwordHash.
+    // Treat those as invalid credentials instead of passing undefined to bcrypt.
+    if (!user || typeof user.passwordHash !== "string" || !user.passwordHash) {
+      return res.status(401).json({ error: "Invalid email or password. If this is an administrator account, run the admin setup command to repair its password." });
+    }
+    const passwordMatches = await bcrypt.compare(String(req.body.password || ""), user.passwordHash);
+    if (!passwordMatches) return res.status(401).json({ error: "Invalid email or password." });
     if (!user.isActive) return res.status(403).json({ error: "This account has been suspended. Contact support." });
-    req.session.userId = user._id.toString();
-    req.session.role = user.role;
-    res.json({ user: safeUser(user) });
+    req.session.regenerate((sessionError) => {
+      if (sessionError) return next(sessionError);
+      req.session.userId = user._id.toString();
+      req.session.role = user.role;
+      req.session.save((saveError) => {
+        if (saveError) return next(saveError);
+        res.json({ user: safeUser(user) });
+      });
+    });
   } catch (e) { next(e); }
 });
 
-router.post("/logout", (req, res) => req.session.destroy(() => res.json({ message: "Signed out." })));
+router.post("/logout", (req, res, next) => req.session.destroy((err) => {
+  if (err) return next(err);
+  res.clearCookie("vw.sid", { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
+  res.json({ message: "Signed out." });
+}));
 router.get("/me", async (req, res, next) => {
   try {
     if (!req.session.userId) return res.json({ user: null });
@@ -47,6 +69,6 @@ router.get("/me", async (req, res, next) => {
 });
 
 function safeUser(u) {
-  return { id: u._id, role: u.role, fullName: u.fullName, email: u.email, phone: u.phone, county: u.county, town: u.town, occupation: u.occupation, organization: u.organization, paymentStatus: u.paymentStatus, verificationStatus: u.verificationStatus, skills: u.skills, experience: u.experience, bio: u.bio, organization: u.organization, documents: u.documents };
+  return { id: u._id, role: u.role, fullName: u.fullName, email: u.email, phone: u.phone, county: u.county, town: u.town, occupation: u.occupation, organization: u.organization, paymentStatus: u.paymentStatus, verificationStatus: u.verificationStatus, skills: u.skills, experience: u.experience, bio: u.bio, documents: u.documents };
 }
 module.exports = router;

@@ -34,7 +34,7 @@ router.post("/jobs", requireAuth, requireRole("employer", "agency"), async (req,
 
 router.get("/admin/users", requireAuth, requireRole("admin"), async (req, res, next) => {
   try {
-    const users = await User.find().select("-passwordHash").sort({ createdAt: -1 }).limit(500);
+    const users = await User.find().select("fullName email phone role county town occupation skills experience bio organization profileImage paymentStatus registrationPaidAt verificationStatus documents isActive createdAt").sort({ createdAt: -1 }).limit(1000).lean();
     res.json({ users });
   } catch (e) { next(e); }
 });
@@ -71,6 +71,23 @@ router.patch("/admin/documents/:userId/:index", requireAuth, requireRole("admin"
     await user.save(); res.json({user:user.toObject({transform:(doc,ret)=>{delete ret.passwordHash;delete ret.idNumber;return ret;}})});
   }catch(e){next(e);}
 });
+router.post("/admin/jobs", requireAuth, requireRole("admin"), async (req, res, next) => {
+  try {
+    const { title, category, county, description, employmentType, salary, status } = req.body;
+    if (!String(title || "").trim() || !String(description || "").trim()) {
+      return res.status(400).json({ error: "Job title and description are required." });
+    }
+    const initialStatus = status === "published" ? "published" : "pending";
+    const job = await Job.create({
+      employer: req.session.userId,
+      title: String(title).trim(), category: String(category || "").trim(),
+      county: String(county || "").trim(), description: String(description).trim(),
+      employmentType, salary: String(salary || "Negotiable").trim(), status: initialStatus
+    });
+    res.status(201).json({ job, message: initialStatus === "published" ? "Job published successfully." : "Job saved as pending review." });
+  } catch (e) { next(e); }
+});
+
 router.patch("/admin/jobs/:id", requireAuth, requireRole("admin"), async (req, res, next) => {
   try {
     const status = req.body.status;
