@@ -23,7 +23,8 @@ function renderAuth(role = "") {
     <div id="orgField" style="display:none"><label>Organisation / agency name</label><input name="organization" placeholder="Registered business name"></div>
     <div id="workerFields"><label>Occupation / skill</label><input name="occupation" placeholder="e.g. Electrician, Driver, Chef"><label>County</label><input name="county" placeholder="County"><label>Town</label><input name="town" placeholder="Town"></div>
     <label>Password (minimum 8 characters)</label><input name="password" type="password" minlength="8" required placeholder="Create a strong password">
-    <label style="display:flex;gap:8px;align-items:flex-start;font-weight:500"><input type="checkbox" name="termsAccepted" value="true" required style="width:auto"> I accept the <a href="/terms.html" target="_blank" rel="noopener">Terms</a> and <a href="/privacy.html" target="_blank" rel="noopener">Privacy Notice</a>.</label><input type="hidden" name="privacyConsent" value="true"><button class="btn btn-primary">Create account</button>
+    <label style="display:flex;gap:8px;align-items:flex-start;font-weight:500"><input type="checkbox" name="termsAccepted" value="true" required style="width:auto"> I accept the <a href="/terms.html" target="_blank" rel="noopener">Terms of Service</a>.</label>
+    <label style="display:flex;gap:8px;align-items:flex-start;font-weight:500"><input type="checkbox" name="privacyConsent" value="true" required style="width:auto"> I have read the <a href="/privacy.html" target="_blank" rel="noopener">Privacy Notice</a> and consent to the processing of my information as described.</label><button class="btn btn-primary">Create account</button>
     <p class="fineprint">By registering, you agree to provide accurate information. Registration costs Ksh 199 once. Payment does not guarantee employment or identity verification.</p></form>
     <div class="switch-auth">Already registered? <button onclick="authMode='login';renderAuth()">Log in</button></div>`;
     if (role) $("#accountRole").value = role;
@@ -74,7 +75,7 @@ async function loadJobs(){
 }
 async function searchWorkers(){
   const params=new URLSearchParams(); if($("#skillSearch").value)params.set("skill",$("#skillSearch").value);if($("#countySearch").value)params.set("county",$("#countySearch").value);
-  try{const {workers}=await api("/api/workers?"+params);$("#workerResults").innerHTML=workers.length?workers.map(w=>`<article class="worker-card"><span class="mini-verified">✓ VERIFIED PROFILE</span><h4>${escapeHtml(w.fullName)}</h4><p>${escapeHtml(w.occupation||"Skilled professional")} · ${escapeHtml(w.town||w.county||"Kenya")}</p><p>${escapeHtml((w.skills||[]).join(" · "))}</p></article>`).join(""):'<div class="empty-state">No matching verified profiles found.</div>';}
+  try{const {workers}=await api("/api/workers?"+params);$("#workerResults").innerHTML=workers.length?workers.map(w=>`<article class="worker-card"><div class="worker-profile-top"><span class="worker-avatar">${escapeHtml((w.fullName||"W").split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase())}</span><span>${w.isPaid?'<span class="public-paid-check" title="Registration fee paid">✓ Fee paid</span>':'<span class="public-unpaid">Fee not paid</span>'}</span></div><h4>${escapeHtml(w.fullName)}</h4><p>${escapeHtml(w.occupation||"Skilled professional")} · ${escapeHtml(w.town||w.county||"Kenya")}</p><p>${escapeHtml((w.skills||[]).join(" · "))}</p>${w.bio?`<p>${escapeHtml(w.bio.slice(0,150))}</p>`:""}</article>`).join(""):'<div class="empty-state">No worker profiles match your search.</div>'; }
   catch{$("#workerResults").innerHTML='<div class="empty-state">Unable to load worker profiles.</div>';}
 }
-$("#year").textContent=new Date().getFullYear();loadJobs();
+$("#year").textContent=new Date().getFullYear();loadJobs();searchWorkers();
