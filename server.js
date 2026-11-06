@@ -17,6 +17,11 @@ const documentRoutes = require("./src/routes/documents");
 const accountRoutes = require("./src/routes/account");
 
 const app = express();
+if (process.env.NODE_ENV === "production") {
+  if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32 || process.env.SESSION_SECRET === "development-only-change-me") {
+    throw new Error("Set SESSION_SECRET to a unique random value of at least 32 characters before production deployment.");
+  }
+}
 app.set("trust proxy", 1);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression());

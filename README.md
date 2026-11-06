@@ -76,7 +76,7 @@ Cloudflare setup references: [R2 S3 API setup](https://developers.cloudflare.com
 Set SMTP variables (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`) to enable password-reset and recruitment emails. Without SMTP, reset requests intentionally return a generic response but no email can be delivered.
 
 ### Admin access
-Register the intended admin account first. Set `ADMIN_EMAIL` in the environment and run `npm run promote-admin` once from a trusted terminal. The script only promotes the matching existing account and does not change its password. Then sign in and open `/dashboard.html`. There is deliberately no public admin signup route.
+Register the intended admin account first. Set `ADMIN_EMAIL` in the environment and run `npm run promote-admin` once from a trusted terminal. The script promotes the matching existing account without changing its password. If the account does not exist, it creates it using `ADMIN_PASSWORD` and `ADMIN_PHONE`. Then sign in and open `/dashboard.html`. There is deliberately no public admin signup route.
 
 ### Data protection and production checklist
 - Publish reviewed Terms of Service and Privacy Notice; obtain clear, recorded consent before collecting personal data.

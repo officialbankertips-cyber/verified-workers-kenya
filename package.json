@@ -6,9 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "promote-admin": "node scripts/promote-admin.js",
-    "check:storage": "node scripts/check-storage.js",
-    "setup-admin": "node scripts/promote-admin.js"
+    "promote-admin": "node script/promote-admin.js",
+    "check:storage": "node script/check-storage.js",
+    "setup-admin": "node script/promote-admin.js"
   },
   "engines": {
     "node": ">=20"
